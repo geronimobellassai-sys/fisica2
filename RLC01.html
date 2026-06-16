@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Circuito RLC Serie</title>
+    <!-- Script automático para renderizar ecuaciones matemáticas en páginas web -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
+    <style>
+        :root {
+            --primary: #0d6efd;
+            --secondary: #6c757d;
+            --success: #198754;
+            --dark: #212529;
+            --light: #f8f9fa;
+        }
+        
+        body {
+            background-color: #e9ecef;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .presentation-container {
+            width: 100%;
+            max-width: 1100px;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Control de diapositivas con CSS Puro */
+        .slide-radio {
+            display: none;
+        }
+
+        .slides-wrapper {
+            width: 100%;
+        }
+
+        .mdl-slide {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            min-height: 560px;
+        }
+
+        /* Activación de diapositiva según el botón seleccionado */
+        #rad-slide1:checked ~ .slides-wrapper .mdl-slide-1,
+        #rad-slide2:checked ~ .slides-wrapper .mdl-slide-2,
+        #rad-slide3:checked ~ .slides-wrapper .mdl-slide-3,
+        #rad-slide4:checked ~ .slides-wrapper .mdl-slide-4,
+        #rad-slide5:checked ~ .slides-wrapper .mdl-slide-5,
+        #rad-slide6:checked ~ .slides-wrapper .mdl-slide-6,
+        #rad-slide7:checked ~ .slides-wrapper .mdl-slide-7,
+        #rad-slide8:checked ~ .slides-wrapper .mdl-slide-8,
+        #rad-slide9:checked ~ .slides-wrapper .mdl-slide-9 {
+            display: grid;
+        }
+
+        /* Paneles de información */
+        .mdl-left-panel {
+            background-color: var(--light);
+            padding: 2.5rem;
+            border-right: 2px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .mdl-right-panel {
+            padding: 2.5rem;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .presentation-container h2 {
+            color: var(--primary);
+            margin-top: 0;
+            font-size: 1.6rem;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .presentation-container h3 {
+            color: var(--dark);
+            margin-top: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .mdl-enunciado-box {
+            background: #f1f3f5;
+            border-left: 5px solid var(--primary);
+            padding: 1.2rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            font-style: italic;
+        }
+
+        .mdl-formula-box {
+            background: #fff;
+            border-left: 5px solid var(--success);
+            padding: 0.8rem;
+            margin: 0.6rem 0;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .mdl-explanation-text {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: #495057;
+        }
+
+        .mdl-diagram-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 1rem;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0.8rem;
+        }
+
+        /* Barra de navegación inferior */
+        .mdl-controls {
+            height: 70px;
+            background: var(--dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            color: white;
+            margin-top: auto;
+            border-radius: 6px;
+        }
+
+        .mdl-btn {
+            background: var(--primary);
+            color: white !important;
+            padding: 0.6rem 1.6rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            user-select: none;
+        }
+
+        .mdl-btn:hover {
+            filter: brightness(1.2);
+        }
+
+        .mdl-btn.disabled {
+            background: var(--secondary);
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .mdl-progress-indicator {
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        /* Responsividad para pantallas móviles */
+        @media(max-width: 768px) {
+            .mdl-slide { grid-template-columns: 1fr; }
+            .mdl-left-panel { border-right: none; border-bottom: 2px solid #dee2e6; padding: 1.5rem; }
+            .mdl-right-panel { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="presentation-container">
+    <!-- Controles de estado (Radio Buttons) -->
+    <input type="radio" id="rad-slide1" name="rlc-present" class="slide-radio" checked>
+    <input type="radio" id="rad-slide2" name="rlc-present" class="slide-radio">
+    <input type="radio" id="rad-slide3" name="rlc-present" class="slide-radio">
+    <input type="radio" id="rad-slide4" name="rlc-present" class="slide-radio">
+    <input type="radio" id="rad-slide5" name="rlc-present" class="slide-radio">
+    <input type="radio" id="rad-slide6" name="rlc-present" class="slide-radio">
+    <input type="radio" id="rad-slide7" name="rlc-present" class="slide-radio">
+    <input type="radio" id="rad-slide8" name="rlc-present" class="slide-radio">
+    <input type="radio" id="rad-slide9" name="rlc-present" class="slide-radio">
+    
+    <div class="slides-wrapper">
+        
+        <!-- DIAPOSITIVA 1: ENUNCIADO DEL PROBLEMA -->
+        <div class="mdl-slide mdl-slide-1">
+            <div class="mdl-left-panel">
+                <h2>Enunciado del Problema</h2>
+                <div class="mdl-enunciado-box">
+                    <p class="mdl-explanation-text">
+                        "Un circuito serie \(RLC\) se encuentra conectado a una línea de corriente alterna de frecuencia \(f = 50 \text{ Hz}\). El generador entrega un voltaje máximo de \(V = 200 \text{ V}\). Sabiendo que los componentes del sistema poseen los valores de resistencia \(R = 25 \ \Omega\), inductancia \(L = 10 \text{ mH}\) y capacitancia \(C = 100 \ \mu\text{F}\); determine de forma fasorial y analítica el comportamiento global de las oposiciones, corrientes, caídas de tensión y potencias del circuito."
+                    </p>
+                </div>
+            </div>
+            <div class="mdl-right-panel">
+                <h3>Introducción al Análisis en CA</h3>
+                <p class="mdl-explanation-text">Este ejercicio integra los tres componentes pasivos fundamentales de la electrotecnia en un acoplamiento serie.</p>
+                <p class="mdl-explanation-text">A lo largo de la presentación analizaremos cómo interactúan las reactancias y cómo calcular de forma vectorial cada una de las respuestas eléctricas solicitadas.</p>
+                <div class="mdl-controls">
+                    <label class="mdl-btn disabled">Anterior</label>
+                    <span class="mdl-progress-indicator">DIAPOSITIVA 1 DE 9</span>
+                    <label for="rad-slide2" class="mdl-btn">Siguiente</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIAPOSITIVA 2: EXTRACCIÓN DE DATOS -->
+        <div class="mdl-slide mdl-slide-2">
+            <div class="mdl-left-panel">
+                <h2>Circuito RLC Serie</h2>
+                <div class="mdl-formula-box">
+                    \[f = 50 \text{ Hz}\]
+                    \[V = 200 \text{ V}\]
+                    \[R = 25 \ \Omega\]
+                    \[L = 10 \text{ mH} = 10 \times 10^{-3} \text{ H}\]
+                    \[C = 100 \ \mu\text{F} = 100 \times 10^{-6} \text{ F}\]
+                </div>
+                <div class="mdl-diagram-container">
+                    <svg width="280" height="120" viewBox="0 0 280 120">
+                        <path d="M 40 20 L 100 20 M 160 20 L 240 20 L 240 45 M 240 75 L 240 100 L 155 100 M 125 100 L 40 100 L 40 75 M 40 45 L 40 20" fill="none" stroke="#212529" stroke-width="2"/>
+                        <circle cx="40" cy="60" r="15" fill="#fff" stroke="#0d6efd" stroke-width="2"/>
+                        <path d="M 34 60 Q 37 52 40 60 T 46 60" fill="none" stroke="#0d6efd" stroke-width="2"/>
+                        <text x="15" y="65" font-family="serif" font-size="16" font-style="italic" font-weight="bold" fill="#0d6efd">V</text>
+                        <path d="M 100 20 L 105 10 L 115 30 L 125 10 L 135 30 L 145 10 L 155 30 L 160 20" fill="none" stroke="#dc3545" stroke-width="2"/>
+                        <text x="125" y="45" font-family="serif" font-size="14" font-style="italic" font-weight="bold" fill="#dc3545">R</text>
+                        <path d="M 240 45 C 255 45 255 52 240 52 C 255 52 255 59 240 59 C 255 59 255 66 240 66 C 255 66 255 73 240 73" fill="none" stroke="#198754" stroke-width="2"/>
+                        <text x="260" y="65" font-family="serif" font-size="14" font-style="italic" font-weight="bold" fill="#198754">L</text>
+                        <line x1="125" y1="90" x2="125" y2="110" stroke="#ffc107" stroke-width="3"/>
+                        <line x1="155" y1="90" x2="155" y2="110" stroke="#ffc107" stroke-width="3"/>
+                        <text x="135" y="85" font-family="serif" font-size="14" font-style="italic" font-weight="bold" fill="#ffc107">C</text>
+                        <path d="M 120 50 A 15 15 0 1 1 140 50" fill="none" stroke="#212529" stroke-width="1.5"/>
+                        <polygon points="143,50 137,47 140,54" fill="#212529"/>
+                        <text x="150" y="65" font-family="serif" font-size="14" font-style="italic">I</text>
+                    </svg>
+                </div>
+            </div>
+            <div class="mdl-right-panel">
+                <h3>Fase de recopilación de datos</h3>
+                <p class="mdl-explanation-text">Antes de iniciar cualquier cálculo, es crucial transcribir los datos del enunciado y prestar especial atención a los prefijos métricos.</p>
+                <p class="mdl-explanation-text">Milihenrios (\(10 \text{ mH}\)) y microfaradios (\(100 \ \mu\text{F}\)) deben convertirse de inmediato a sus potencias de base 10 correspondientes. El voltaje proporcionado (\(200 \text{ V}\)) representa la **amplitud máxima o de pico** de la fuente.</p>
+                <div class="mdl-controls">
+                    <label for="rad-slide1" class="mdl-btn">Anterior</label>
+                    <span class="mdl-progress-indicator">DIAPOSITIVA 2 DE 9</span>
+                    <label for="rad-slide3" class="mdl-btn">Siguiente</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIAPOSITIVA 3: REACTANCIAS -->
+        <div class="mdl-slide mdl-slide-3">
+            <div class="mdl-left-panel">
+                <h2>Paso 1: Frecuencia Angular y Reactancias</h2>
+                <div class="mdl-formula-box">
+                    \[\omega = 2\pi f = 2\pi(50) \approx 314 \text{ rad/s}\]
+                </div>
+                <div class="mdl-formula-box">
+                    \[X_L = \omega L = 314 \cdot (10 \times 10^{-3}) = 3.14 \ \Omega\]
+                </div>
+                <div class="mdl-formula-box">
+                    \[X_C = \frac{1}{\omega C} = \frac{1}{314 \cdot (100 \times 10^{-6})} = 31.9 \ \Omega\]
+                </div>
+            </div>
+            <div class="mdl-right-panel">
+                <h3>Oposición dependiente de la frecuencia</h3>
+                <p class="mdl-explanation-text">En corriente alterna, la oposición que presentan las bobinas (\(X_L\)) y los capacitores (\(X_C\)) varía dinámicamente según la frecuencia del sistema.</p>
+                <p class="mdl-explanation-text">Primero calculamos la velocidad angular \(\omega\). Observa cómo la reactancia inductiva (\(X_L\)) es directamente proporcional a la frecuencia, mientras que la reactancia capacitiva (\(X_C\)) es inversamente proporcional a ella.</p>
+                <div class="mdl-controls">
+                    <label for="rad-slide2" class="mdl-btn">Anterior</label>
+                    <span class="mdl-progress-indicator">DIAPOSITIVA 3 DE 9</span>
+                    <label for="rad-slide4" class="mdl-btn">Siguiente</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIAPOSITIVA 4: IMPEDANCIA (FASOR DE REACTANCIAS) -->
+        <div class="mdl-slide mdl-slide-4">
+            <div class="mdl-left-panel">
+                <h2>Paso 2: Impedancia Total y Desfase</h2>
+                <div class="mdl-formula-box">
+                    \[Z = \sqrt{R^2 + (X_L - X_C)^2} = 38.1 \ \Omega\]
+                    \[\tan(\phi) = \frac{X_L - X_C}{R} \implies \phi = -49^\circ\]
+                </div>
+                <div class="mdl-diagram-container">
+                    <svg width="220" height="150" viewBox="0 0 220 150">
+                        <line x1="20" y1="30" x2="200" y2="30" stroke="#0d6efd" stroke-width="1.5"/>
+                        <line x1="100" y1="5" x2="100" y2="140" stroke="#0d6efd" stroke-width="1.5"/>
+                        <!-- Vector R con punta de flecha -->
+                        <line x1="100" y1="30" x2="168" y2="30" stroke="#198754" stroke-width="2.5"/>
+                        <polygon points="175,30 167,26 167,34" fill="#198754"/>
+                        <text x="175" y="25" font-family="sans-serif" font-size="11" font-weight="bold" fill="#198754">R</text>
+                        <!-- Vector XL con punta de flecha (Hacia arriba) -->
+                        <line x1="100" y1="30" x2="100" y2="17" stroke="#0d6efd" stroke-width="2"/>
+                        <polygon points="100,10 96,18 104,18" fill="#0d6efd"/>
+                        <text x="105" y="15" font-family="sans-serif" font-size="11" font-weight="bold" fill="#0d6efd">X_L</text>
+                        <!-- Vector XC con punta de flecha (Hacia abajo) -->
+                        <line x1="100" y1="30" x2="100" y2="118" stroke="#0d6efd" stroke-width="2"/>
+                        <polygon points="100,125 96,117 104,117" fill="#0d6efd"/>
+                        <text x="105" y="135" font-family="sans-serif" font-size="11" font-weight="bold" fill="#0d6efd">X_C</text>
+                        <!-- Eje diferencia destructiva -->
+                        <line x1="95" y1="30" x2="95" y2="105" stroke="#6c757d" stroke-width="2"/>
+                        <text x="45" y="75" font-family="sans-serif" font-size="10" font-weight="bold" fill="#6c757d">X_L - X_C</text>
+                        <!-- Vector Impedancia Z -->
+                        <line x1="100" y1="30" x2="166" y2="102" stroke="#212529" stroke-width="3"/>
+                        <polygon points="171,106 162,102 167,97" fill="#212529"/>
+                        <text x="175" y="115" font-family="sans-serif" font-size="12" font-weight="bold" fill="#212529">Z</text>
+                        <line x1="168" y1="30" x2="168" y2="105" stroke="#212529" stroke-width="1" stroke-dasharray="3,3"/>
+                        <path d="M 120 30 A 20 20 0 0 1 115 45" fill="none" stroke="#212529" stroke-width="1.5"/>
+                        <text x="122" y="45" font-family="sans-serif" font-size="11">φ</text>
+                    </svg>
+                </div>
+            </div>
+            <div class="mdl-right-panel">
+                <h3>Suma Vectorial Fasorial</h3>
+                <p class="mdl-explanation-text">Las oposiciones en CA poseen componentes angulares y desfases, por lo que se suman vectorialmente en un **Diagrama de Reactancias** utilizando el Teorema de Pitágoras.</p>
+                <p class="mdl-explanation-text">Como \(X_C > X_L\), el efecto capacitivo predomina, dando como resultado un ángulo de fase \(\phi\) negativo. Esto nos indica que el circuito posee un comportamiento global **capacitivo**, lo que significa que la corriente adelantará al voltaje de la fuente.</p>
+                <div class="mdl-controls">
+                    <label for="rad-slide3" class="mdl-btn">Anterior</label>
+                    <span class="mdl-progress-indicator">DIAPOSITIVA 4 DE 9</span>
+                    <label for="rad-slide5" class="mdl-btn">Siguiente</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIAPOSITIVA 5: CORRIENTE MÁXIMA -->
+        <div class="mdl-slide mdl-slide-5">
+            <div class="mdl-left-panel">
+                <h2>Paso 3: Intensidad de Corriente Máxima</h2>
+                <div class="mdl-formula-box">
+                    \[V = I \cdot Z \implies I = \frac{V}{Z}\]
+                </div>
+                <div class="mdl-formula-box">
+                    \[I = \frac{200 \text{ V}}{38.1 \ \Omega} = 5.25 \text{ A}\]
+                </div>
+            </div>
+            <div class="mdl-right-panel">
+                <h3>La Ley de Ohm Generalizada</h3>
+                <p class="mdl-explanation-text">Para hallar la intensidad de corriente en circuitos de corriente alterna, recurrimos a la estructura clásica de la Ley de Ohm, sustituyendo la resistencia simple por el valor de la Impedancia total (\(Z\)).</p>
+                <p class="mdl-explanation-text">Debido a que realizamos la operación empleando el voltaje máximo o de pico dado (\(200 \text{ V}\)), el valor calculado de \(5.25 \text{ A}\) representa la **intensidad de corriente máxima** de la onda senoidal.</p>
+                <div class="mdl-controls">
+                    <label for="rad-slide4" class="mdl-btn">Anterior</label>
+                    <span class="mdl-progress-indicator">DIAPOSITIVA 5 DE 9</span>
+                    <label for="rad-slide6" class="mdl-btn">Siguiente</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIAPOSITIVA 6: VOLTAJES DE ELEMENTOS -->
+        <div class="mdl-slide mdl-slide-6">
+            <div class="mdl-left-panel">
+                <h2>Paso 4: Voltajes en cada Elemento</h2>
+                <div class="mdl-formula-box">
+                    \[V_R = I \cdot R = 5.25 \cdot 25 = 131.3 \text{ V}\]
+                </div>
+                <div class="mdl-formula-box">
+                    \[V_L = I \cdot X_L = 5.25 \cdot 3.14 = 16.5 \text{ V}\]
+                </div>
+                <div class="mdl-formula-box">
+                    \[V_C = I \cdot X_C = 5.25 \cdot 31.9 = 167.5 \text{ V}\]
+                </div>
+            </div>
+            <div class="mdl-right-panel">
+                <h3>Caídas de tensión individuales</h3>
+                <p class="mdl-explanation-text">Determinamos las amplitudes de tensión de cada componente multiplicando la corriente común de la serie por cada una de las oposiciones individuales.</p>
+                <p class="mdl-explanation-text">Es crucial hacer notar a los alumnos que una suma algebraica tradicional (\(131.3\text{V} + 16.5\text{V} + 167.5\text{V} = 315.3\text{V}\)) supera los \(200\text{V}\) del generador. Esto ocurre porque las tensiones se encuentran desfasadas en el tiempo y no alcanzan sus valores máximos simultáneamente.</p>
+                <div class="mdl-controls">
+                    <label for="rad-slide5" class="mdl-btn">Anterior</label>
+                    <span class="mdl-progress-indicator">DIAPOSITIVA 6 DE 9</span>
+                    <label for="rad-slide7" class="mdl-btn">Siguiente</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIAPOSITIVA 7: DIAGRAMA DE TENSIONES -->
+        <div class="mdl-slide mdl-slide-7">
+            <div class="mdl-left-panel">
+                <h2>Paso 5: Verificación del Voltaje Total</h2>
+                <div class="mdl-formula-box">
+                    \[V = \sqrt{V_R^2 + (V_L - V_C)^2}\]
+                    \[V = \sqrt{131.3^2 + (16.5 - 167.5)^2} \approx 200 \text{ V}\]
+                </div>
+                <div class="mdl-diagram-container">
+                    <svg width="220" height="150" viewBox="0 0 220 150">
+                        <line x1="20" y1="30" x2="200" y2="30" stroke="#0d6efd" stroke-width="1.5"/>
+                        <line x1="100" y1="5" x2="100" y2="140" stroke="#0d6efd" stroke-width="1.5"/>
+                        <!-- Vector VR con punta de flecha -->
+                        <line x1="100" y1="30" x2="168" y2="30" stroke="#dc3545" stroke-width="2.5"/>
+                        <polygon points="175,30 167,26 167,34" fill="#dc3545"/>
+                        <text x="175" y="25" font-family="sans-serif" font-size="11" font-weight="bold" fill="#dc3545">V_R</text>
+                        <!-- Vector VL con punta de flecha (Hacia arriba) -->
+                        <line x1="100" y1="30" x2="100" y2="17" stroke="#0d6efd" stroke-width="2"/>
+                        <polygon points="100,10 96,18 104,18" fill="#0d6efd"/>
+                        <text x="105" y="15" font-family="sans-serif" font-size="11" font-weight="bold" fill="#0d6efd">V_L</text>
+                        <!-- Vector VC con punta de flecha (Hacia abajo) -->
+                        <line x1="100" y1="30" x2="100" y2="118" stroke="#0d6efd" stroke-width="2"/>
+                        <polygon points="100,125 96,117 104,117" fill="#0d6efd"/>
+                        <text x="105" y="135" font-family="sans-serif" font-size="11" font-weight="bold" fill="#0d6efd">V_C</text>
+                        <!-- Vector Diferencia VL - VC -->
+                        <line x1="95" y1="30" x2="95" y2="105" stroke="#6c757d" stroke-width="2"/>
+                        <text x="45" y="75" font-family="sans-serif" font-size="10" font-weight="bold" fill="#6c757d">V_L - V_C</text>
+                        <!-- Vector Voltaje Total V -->
+                        <line x1="100" y1="30" x2="166" y2="102" stroke="#212529" stroke-width="3"/>
+                        <polygon points="171,106 162,102 167,97" fill="#212529"/>
+                        <text x="175" y="115" font-family="sans-serif" font-size="12" font-weight="bold" fill="#212529">V</text>
+                        <line x1="168" y1="30" x2="168" y2="105" stroke="#212529" stroke-width="1" stroke-dasharray="3,3"/>
+                        <path d="M 120 30 A 20 20 0 0 1 115 45" fill="none" stroke="#212529" stroke-width="1.5"/>
+                        <text x="122" y="45" font-family="sans-serif" font-size="11">φ</text>
+                    </svg>
+                </div>
+            </div>
+            <div class="mdl-right-panel">
+                <h3>Consistencia del balance fasorial</h3>
+                <p class="mdl-explanation-text">Para comprobar que los cálculos son correctos, superponemos los valores vectoriales utilizando el **Diagrama Fasorial de Tensiones**.</p>
+                <p class="mdl-explanation-text">Las tensiones de la bobina y del capacitor actúan en sentidos opuestos sobre el eje vertical, restándose directamente. Al combinar algebraicamente el resultado con la tensión resistiva horizontal por medio de Pitágoras, cerramos el balance retornando con precisión a los \(200\text{ V}\) suministrados.</p>
+                <div class="mdl-controls">
+                    <label for="rad-slide6" class="mdl-btn">Anterior</label>
+                    <span class="mdl-progress-indicator">DIAPOSITIVA 7 DE 9</span>
+                    <label for="rad-slide8" class="mdl-btn">Siguiente</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIAPOSITIVA 8: POTENCIAS -->
+        <div class="mdl-slide mdl-slide-8">
+            <div class="mdl-left-panel">
+                <h2>Paso 6: Potencia Media Disipada</h2>
+                <p><strong>Método 1 (Con Amplitudes Máximas):</strong></p>
+                <div class="mdl-formula-box">
+                    \[P_m = \frac{V \cdot I}{2} \cos(\phi) = 344.4 \text{ W}\]
+                </div>
+                <p><strong>Método 2 (Con Valores Eficaces / RMS):</strong></p>
+                <div class="mdl-formula-box">
+                    \[I_{ef} = 3.71 \text{ A}, \ \ V_{ef} = 141.5 \text{ V}\]
+                    \[P_m = V_{ef} \cdot I_{ef} \cos(\phi) = 344.4 \text{ W}\]
+                </div>
+                <p><strong>Método 3 (Pérdida por Efecto Joule):</strong></p>
+                <div class="mdl-formula-box">
+                    \[P_m = R \cdot I_{ef}^2 = 25 \cdot (3.71)^2 = 344.1 \text{ W}\]
+                </div>
+            </div>
+            <div class="mdl-right-panel">
+                <h3>Trabajo Útil o Potencia Activa</h3>
+                <p class="mdl-explanation-text">La potencia media (potencia activa) cuantifica el promedio de energía neta por unidad de tiempo transferida de forma irreversible fuera del sistema (calor disipado).</p>
+                <p class="mdl-explanation-text">Explorar los tres caminos analíticos permite comprender que los componentes reactivos (\(X_L\) y \(X_C\)) no absorben potencia real de manera permanente; únicamente intercambian energía reactiva con la red de forma oscilatoria. Toda la disipación real del circuito recae sobre la resistencia (\(R\)).</p>
+                <div class="mdl-controls">
+                    <label for="rad-slide7" class="mdl-btn">Anterior</label>
+                    <span class="mdl-progress-indicator">DIAPOSITIVA 8 DE 9</span>
+                    <label for="rad-slide9" class="mdl-btn">Siguiente</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIAPOSITIVA 9: FACTOR DE POTENCIA -->
+        <div class="mdl-slide mdl-slide-9">
+            <div class="mdl-left-panel">
+                <h2>Paso 7: Factor de Potencia</h2>
+                <div class="mdl-formula-box">
+                    \[FP = \cos(\phi)\]
+                    \[FP = \cos(-49^\circ) = 0.66\]
+                </div>
+            </div>
+            <div class="mdl-right-panel">
+                <h3>Aprovechamiento de la energía</h3>
+                <p class="mdl-explanation-text">El **Factor de Potencia (\(FP\))** expresa numéricamente la proporción que existe entre la potencia activa disipada (trabajo real útil) y la potencia aparente total suministrada por la red.</p>
+                <p class="mdl-explanation-text">Un valor de \(0.66\) indica que el \(66\%\) de la corriente entregada se aprovecha en realizar un trabajo útil neto en la resistencia, mientras que el \(34\%\) restante representa corrientes reactivas necesarias para establecer los campos magnéticos y eléctricos en la bobina y capacitor.</p>
+                <div class="mdl-controls">
+                    <label for="rad-slide8" class="mdl-btn">Anterior</label>
+                    <span class="mdl-progress-indicator">DIAPOSITIVA 9 DE 9</span>
+                    <label class="mdl-btn disabled">Siguiente</label>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+</body>
+</html>
