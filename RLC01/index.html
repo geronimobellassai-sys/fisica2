@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circuito RLC en Serie - Presentación Interactiva</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            startup: { typeset: true }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        .presentation-wrapper { width: 100%; max-width: 1280px; }
+        .presentation-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        .slide {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: calc(100% - 70px);
+            padding: 3% 4%; display: none;
+            overflow-y: auto; animation: fadeIn 0.5s ease;
+        }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        
+        h1 {
+            color: #ffffff; background: linear-gradient(135deg, #f39c12, #e67e22);
+            padding: 1% 2%; border-radius: 8px; font-size: clamp(1.3rem, 2.3vw, 2rem);
+            margin-bottom: 1.5%; box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+        }
+        h2 {
+            color: #ffffff; background: linear-gradient(135deg, #e67e22, #d35400);
+            padding: 0.6% 1.2%; border-radius: 6px; font-size: clamp(1rem, 1.6vw, 1.4rem);
+            margin: 1% 0 0.8% 0; display: inline-block;
+        }
+        h3 {
+            color: #2c3e50; font-size: clamp(0.9rem, 1.3vw, 1.1rem);
+            margin: 1% 0 0.5% 0; border-left: 4px solid #3498db; padding-left: 0.8%;
+        }
+        p, li { font-size: clamp(0.8rem, 1.05vw, 0.95rem); line-height: 1.6; margin: 0.4% 0; }
+        
+        .content-box { background: #f8f9fa; padding: 1.2%; border-radius: 8px; margin: 0.8% 0; border-left: 5px solid #3498db; }
+        .theory-box { background: #eaf4fb; padding: 1.2%; border-radius: 8px; margin: 0.8% 0; border-left: 5px solid #2980b9; }
+        .data-box { background: #e8f8f5; border-left-color: #1abc9c; padding: 1.2%; border-radius: 8px; margin: 0.8% 0; }
+        .formula-box { background: #fef9e7; border-left: 5px solid #f39c12; padding: 0.8% 1.2%; border-radius: 8px; margin: 0.6% 0; text-align: center; }
+        .result-box { background: #d5f5e3; border-left: 5px solid #27ae60; padding: 0.8% 1.2%; border-radius: 8px; margin: 0.6% 0; font-weight: bold; color: #1e8449; }
+        .note-box { background: #fdebd0; border-left: 5px solid #e67e22; padding: 0.8% 1.2%; border-radius: 8px; margin: 0.6% 0; font-style: italic; }
+        .highlight { background: #fff3cd; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+        
+        .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5%; margin: 0.8% 0; }
+        .three-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2%; margin: 0.8% 0; }
+        
+        .step-number {
+            display: inline-block; background: #e74c3c; color: white;
+            width: 26px; height: 26px; border-radius: 50%; text-align: center;
+            line-height: 26px; margin-right: 8px; font-weight: bold; font-size: 0.85em;
+        }
+        
+        .circuit-diagram, .vector-diagram { text-align: center; margin: 0.8% 0; padding: 0.8%; background: #fafafa; border-radius: 8px; }
+        .diagram-img { max-width: 100%; max-height: 280px; object-fit: contain; margin: 0.5% 0; }
+        
+        ul { margin-left: 2.5%; line-height: 1.7; }
+        li { margin: 0.3% 0; }
+        
+        .navigation {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 70px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            display: flex; justify-content: space-between; align-items: center; padding: 0 3%;
+        }
+        .nav-button {
+            background: linear-gradient(135deg, #3498db, #2980b9); color: white;
+            border: none; padding: 10px 25px; border-radius: 25px; cursor: pointer;
+            font-size: clamp(0.85rem, 1vw, 1rem); transition: all 0.3s; font-weight: bold;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        .nav-button:hover:not(:disabled) { background: linear-gradient(135deg, #2980b9, #1f6da0); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .nav-button:disabled { background: #7f8c8d; cursor: not-allowed; opacity: 0.5; }
+        .slide-counter { color: white; font-size: clamp(0.9rem, 1.1vw, 1.1rem); font-weight: bold; }
+        .progress-bar { position: absolute; top: 0; left: 0; height: 5px; background: linear-gradient(90deg, #f39c12, #e67e22); transition: width 0.4s ease; }
+        .diagram-caption { font-size: clamp(0.7rem, 0.85vw, 0.85rem); color: #7f8c8d; margin-top: 0.4%; font-style: italic; }
+        
+        @media (max-width: 768px) { .two-columns, .three-columns { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="presentation-wrapper">
+        <div class="presentation-container">
+            <div class="progress-bar" id="progressBar"></div>
+
+            <!-- SLIDE 1: PORTADA Y ENUNCIADO -->
+            <div class="slide active">
+                <h1>🔌 Circuito RLC en Serie - Análisis Completo</h1>
+                <div class="content-box">
+                    <h3>📋 Enunciado del Problema</h3>
+                    <p>En el circuito RLC de la figura, el voltaje máximo del generador $V$ es <span class="highlight">200 V</span> y su frecuencia es de <span class="highlight">50 Hz</span>. Responda a las siguientes preguntas considerando que: $R = 25\,\Omega$; $L = 10\,\text{mH}$; $C = 100\,\mu\text{F}$.</p>
+                </div>
+                <div class="circuit-diagram">
+                    <img src="circuito.png" alt="Diagrama del circuito RLC en serie" class="diagram-img">
+                </div>
+                <div class="note-box">
+                    <strong>💡 Objetivo:</strong> Analizar completamente el circuito calculando impedancia, corriente, voltajes, potencia media y factor de potencia.
+                </div>
+            </div>
+
+            <!-- SLIDE 2: DATOS DEL EJERCICIO -->
+            <div class="slide">
+                <h1>📊 Datos del Ejercicio</h1>
+                <div class="data-box">
+                    <h3>Parámetros conocidos del circuito</h3>
+                    <div class="two-columns">
+                        <div class="formula-box" style="text-align:left;">
+                            <p><strong>Frecuencia:</strong> $f = 50\,\text{Hz}$</p>
+                            <p><strong>Voltaje máximo:</strong> $V = 200\,\text{V}$</p>
+                            <p><strong>Resistencia:</strong> $R = 25\,\Omega$</p>
+                        </div>
+                        <div class="formula-box" style="text-align:left;">
+                            <p><strong>Inductancia:</strong> $L = 10\,\text{mH} = 10 \times 10^{-3}\,\text{H}$</p>
+                            <p><strong>Capacitancia:</strong> $C = 100\,\mu\text{F} = 100 \times 10^{-6}\,\text{F}$</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="theory-box">
+                    <h3>📐 Resolución del circuito</h3>
+                    <p>Para resolver necesitamos calcular la <strong>oposición total al paso de la corriente</strong> ejercida por el circuito. Esto es la <strong>Impedancia $Z$</strong> del circuito. Dada por la fórmula:</p>
+                    <div class="formula-box">$$Z = \sqrt{R^2 + (X_L - X_C)^2}$$</div>
+                    <p>Como no disponemos de los valores de la <strong>Reactancia Inductiva</strong> $X_L$ y la <strong>Reactancia Capacitiva</strong> $X_C$; debemos calcularlas a partir de:</p>
+                    <div class="formula-box">$$X_L = \omega L \qquad \text{y} \qquad X_C = \frac{1}{\omega C}$$</div>
+                    <p>Finalmente, para calcular las Reactancias necesitamos tener la <strong>frecuencia angular</strong> $\omega = 2\pi f$</p>
+                </div>
+            </div>
+
+            <!-- SLIDE 3: CÁLCULO DE ω, XL y XC -->
+            <div class="slide">
+                <h1>⚙️ Cálculo de $\omega$, $X_L$ y $X_C$</h1>
+                <h3><span class="step-number">1</span>Frecuencia Angular ($\omega$)</h3>
+                <div class="content-box"><div class="formula-box">$$f = 50\,\text{Hz} \;\Rightarrow\; \omega = 2\pi f = 2\pi \times 50 = 314\,\frac{\text{rad}}{\text{s}}$$</div></div>
+                <h3><span class="step-number">2</span>Reactancia Inductiva ($X_L$)</h3>
+                <div class="content-box"><div class="formula-box">$$L = 10\,\text{mH} \;\Rightarrow\; X_L = \omega L = 314 \times 10 \times 10^{-3} = 3{,}14\,\Omega$$</div></div>
+                <h3><span class="step-number">3</span>Reactancia Capacitiva ($X_C$)</h3>
+                <div class="content-box"><div class="formula-box">$$C = 100\,\mu\text{F} \;\Rightarrow\; X_C = \frac{1}{\omega C} = \frac{1}{314 \times 100 \times 10^{-6}} = 31{,}9\,\Omega$$</div></div>
+                <div class="result-box"><strong>✅ Resultados:</strong> $\omega = 314\,\text{rad/s}$, $X_L = 3{,}14\,\Omega$, $X_C = 31{,}9\,\Omega$</div>
+                <div class="note-box"><strong>🔍 Observación:</strong> Como $X_C > X_L$ ($31{,}9 > 3{,}14$), el circuito tiene <strong>predominio capacitivo</strong>. La corriente se adelantará al voltaje.</div>
+            </div>
+
+            <!-- SLIDE 4: CÁLCULO DE LA IMPEDANCIA Z -->
+            <div class="slide">
+                <h1>🎯 Cálculo de la Impedancia $Z$</h1>
+                <div class="two-columns">
+                    <div>
+                        <div class="data-box">
+                            <h3>Ya disponemos de</h3>
+                            <p>$R = 25\,\Omega$</p>
+                            <p>$X_L = 3{,}14\,\Omega$</p>
+                            <p>$X_C = 31{,}9\,\Omega$</p>
+                        </div>
+                        <div class="theory-box"><p><strong>Obs.:</strong> La fórmula de $Z$ resulta de aplicar <strong>Pitágoras</strong> al diagrama Fasorial</p></div>
+                        <div class="formula-box">$$Z = \sqrt{R^2 + (X_L - X_C)^2}$$ $$Z = \sqrt{25^2 + (3{,}14 - 31{,}9)^2}$$</div>
+                        <div class="result-box">$$Z = 38{,}1\,\Omega$$</div>
+                    </div>
+                    <div class="vector-diagram">
+                        <h3>Diagrama Fasorial de las Reactancias</h3>
+                        <img src="reactancias.png" alt="Diagrama fasorial de reactancias" class="diagram-img">
+                        <p class="diagram-caption">El diagrama debe ser hecho a escala</p>
+                    </div>
+                </div>
+                <h3>Cálculo del Ángulo de Fase ($\phi$)</h3>
+                <div class="formula-box">$$\tan\phi = \frac{X_L - X_C}{R} = \frac{3{,}14 - 31{,}9}{25} = \frac{-28{,}76}{25} = -1{,}15$$</div>
+                <div class="result-box">$$\phi = -49° = -0{,}855\,\text{rad}$$</div>
+            </div>
+
+            <!-- SLIDE 5: CÁLCULO DE LA CORRIENTE I -->
+            <div class="slide">
+                <h1>⚡ Cálculo de la Corriente $I$</h1>
+                <div class="theory-box"><h3>Relación fundamental</h3><p>La corriente la obtendremos a partir de la relación $V = IZ$</p></div>
+                <div class="formula-box">$$\Rightarrow \quad I = \frac{V}{Z} \qquad I = \frac{200}{38{,}1} = 5{,}25\,\text{A}$$</div>
+                <div class="result-box">$$I = 5{,}25\,\text{A}$$</div>
+                <div class="note-box">
+                    <h3>⚠️ Nota importante</h3>
+                    <p>Como el dato $V = 200\,\text{V}$ es el <strong>valor máximo o pico</strong> de la diferencia de potencial de la fuente la $I$ calculada es también el <strong>valor máximo de la corriente</strong>.</p>
+                </div>
+                <div class="content-box">
+                    <h3>📐 Valor eficaz de la corriente</h3>
+                    <p>Para cálculos de potencia necesitaremos el valor eficaz (RMS):</p>
+                    <div class="formula-box">$$I_{ef} = \frac{I}{\sqrt{2}} = \frac{5{,}25}{\sqrt{2}} = 3{,}71\,\text{A}$$</div>
+                </div>
+            </div>
+
+            <!-- SLIDE 6: VOLTAJES EN CADA ELEMENTO -->
+            <div class="slide">
+                <h1>🔋 Cálculo de la Diferencia de Potencial en Cada Elemento</h1>
+                <div class="theory-box">
+                    <h3>Fórmulas utilizadas</h3>
+                    <p>Se utilizan las fórmulas:</p>
+                    <div class="formula-box">$$V_R = IR \qquad V_L = IX_L \qquad V_C = IX_C$$</div>
+                </div>
+                <div class="three-columns">
+                    <div class="content-box">
+                        <h3>Voltaje en la Resistencia</h3>
+                        <div class="formula-box">$$V_R = IR = 5{,}25 \times 25 = 131{,}3\,\text{V}$$</div>
+                        <div class="result-box">$$V_R = 131{,}3\,\text{V}$$</div>
+                    </div>
+                    <div class="content-box">
+                        <h3>Voltaje en el Inductor</h3>
+                        <div class="formula-box">$$V_L = IX_L = 5{,}25 \times 3{,}14 = 16{,}5\,\text{V}$$</div>
+                        <div class="result-box">$$V_L = 16{,}5\,\text{V}$$</div>
+                    </div>
+                    <div class="content-box">
+                        <h3>Voltaje en el Capacitor</h3>
+                        <div class="formula-box">$$V_C = IX_C = 5{,}25 \times 31{,}9 = 167{,}5\,\text{V}$$</div>
+                        <div class="result-box">$$V_C = 167{,}5\,\text{V}$$</div>
+                    </div>
+                </div>
+                <div class="note-box">
+                    <h3>🔍 Observación importante</h3>
+                    <p>Si sumamos aritméticamente: $131{,}3 + 16{,}5 + 167{,}5 = 315{,}3\,\text{V}$, que es <strong>mayor que los 200 V</strong> de la fuente. ¿Es esto un error?</p>
+                    <p><strong>¡No!</strong> Los voltajes en un circuito AC no se suman aritméticamente, sino <strong>fasorialmente</strong> (como vectores).</p>
+                </div>
+            </div>
+
+            <!-- SLIDE 7: VERIFICACIÓN DE V TOTAL -->
+            <div class="slide">
+                <h1>✅ Verificación de $V$ Total</h1>
+                <div class="theory-box">
+                    <h3>Verificación fasorial</h3>
+                    <p>A modo de verificación, volvemos a calcular $V$ total. Partimos del dato $V = 200\,\text{V}$</p>
+                    <p>Del <strong>diagrama Fasorial de Tensiones</strong> podemos calcular $V$ a partir de $V_R$, $V_L$ y $V_C$.</p>
+                </div>
+                <div class="two-columns">
+                    <div class="vector-diagram">
+                        <h3>Diagrama Fasorial de Tensiones</h3>
+                        <img src="tensiones.png" alt="Diagrama fasorial de tensiones" class="diagram-img">
+                    </div>
+                    <div>
+                        <h3>Aplicando Pitágoras</h3>
+                        <div class="formula-box">$$V = \sqrt{V_R^2 + (V_L - V_C)^2}$$</div>
+                        <div class="content-box">
+                            <p>Sustituyendo los valores calculados:</p>
+                            <div class="formula-box">$$V = \sqrt{131{,}3^2 + (16{,}5 - 167{,}5)^2}$$ $$V = \sqrt{131{,}3^2 + (-151)^2}$$</div>
+                        </div>
+                        <div class="result-box">$$V = 200\,\text{V}$$</div>
+                        <div class="note-box" style="background:#d5f5e3; border-left-color:#27ae60;">
+                            <strong>✅ ¡Verificación exitosa!</strong> El cálculo coincide perfectamente con el dato original del problema.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 8: POTENCIA MEDIA -->
+            <div class="slide">
+                <h1>💡 Cálculo de la Potencia Media Entregada por la Fuente</h1>
+                <div class="theory-box">
+                    <h3>Tres formas equivalentes de calcular la potencia media</h3>
+                    <p>Se puede calcular a partir de estos tres caminos:</p>
+                    <div class="formula-box">$$P_m = \frac{VI}{2}\cos\phi \qquad P_m = V_{ef}I_{ef}\cos\phi \qquad P_m = RI_{ef}^2$$</div>
+                </div>
+                <div class="content-box">
+                    <h3><span class="step-number">1</span>1ra forma</h3>
+                    <div class="formula-box">$$P_m = \frac{VI}{2}\cos\phi = \frac{200 \times 5{,}25}{2}\cos(-49°) = 344{,}4\,\text{W}$$</div>
+                </div>
+                <div class="content-box">
+                    <h3><span class="step-number">2</span>2da forma</h3>
+                    <p>Se necesita:</p>
+                    <div class="formula-box">$$I_{ef} = \frac{I}{\sqrt{2}} = \frac{5{,}25}{\sqrt{2}} = 3{,}71\,\text{A}$$ $$V_{ef} = \frac{V}{\sqrt{2}} = \frac{200}{\sqrt{2}} = 141{,}5\,\text{V}$$</div>
+                    <div class="formula-box">$$P_m = V_{ef}I_{ef}\cos\phi = 141{,}5 \times 3{,}71\cos(-49°) = 344{,}4\,\text{W}$$</div>
+                </div>
+                <div class="content-box">
+                    <h3><span class="step-number">3</span>3ra forma</h3>
+                    <div class="formula-box">$$P_m = RI_{ef}^2 = 25 \times 3{,}71^2 = 344{,}1\,\text{W}$$</div>
+                </div>
+                <div class="result-box">$$P_m \approx 344\,\text{W}$$</div>
+            </div>
+
+            <!-- SLIDE 9: FACTOR DE POTENCIA -->
+            <div class="slide">
+                <h1> Cálculo del Factor de Potencia FP</h1>
+                <div class="theory-box">
+                    <h3>Definición del Factor de Potencia</h3>
+                    <p>El Factor de Potencia se define:</p>
+                    <div class="formula-box">$$FP = \cos\phi$$</div>
+                    <p>El factor de potencia toma valores entre 0 y 1:</p>
+                    <ul>
+                        <li><strong>FP = 1:</strong> Circuito puramente resistivo (máxima eficiencia)</li>
+                        <li><strong>FP = 0:</strong> Circuito puramente reactivo (sin consumo de potencia activa)</li>
+                        <li><strong>0 &lt; FP &lt; 1:</strong> Circuito mixto (nuestro caso)</li>
+                    </ul>
+                </div>
+                <h3>Cálculo</h3>
+                <div class="formula-box">$$FP = \cos\phi = \cos(-49°) = 0{,}66$$</div>
+                <div class="result-box">$$FP = 0{,}66$$</div>
+                <div class="two-columns">
+                    <div class="content-box">
+                        <h3>🔍 Interpretación del resultado</h3>
+                        <ul>
+                            <li><strong>Valor:</strong> 0,66 (66%)</li>
+                            <li><strong>Tipo:</strong> Capacitivo (porque $\phi$ es negativo)</li>
+                            <li><strong>Significado:</strong> Solo el 66% de la potencia aparente se convierte en potencia útil (activa)</li>
+                        </ul>
+                    </div>
+                    <div class="note-box">
+                        <h3>💡 ¿Cómo mejorar el FP?</h3>
+                        <p>Como el circuito es <strong>capacitivo</strong> ($X_C > X_L$), para mejorar el factor de potencia habría que <strong>aumentar la inductancia</strong> $L$ o <strong>disminuir la capacitancia</strong> $C$.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 10: RESUMEN FINAL -->
+            <div class="slide">
+                <h1> Resumen Final del Circuito RLC</h1>
+                <div class="two-columns">
+                    <div>
+                        <div class="result-box">
+                            <h3>Parámetros calculados</h3>
+                            <p>$\omega = 314\,\text{rad/s}$</p>
+                            <p>$X_L = 3{,}14\,\Omega$</p>
+                            <p>$X_C = 31{,}9\,\Omega$</p>
+                            <p>$Z = 38{,}1\,\Omega$</p>
+                            <p>$\phi = -49° = -0{,}855\,\text{rad}$</p>
+                        </div>
+                        <div class="result-box">
+                            <h3>Corriente y voltajes</h3>
+                            <p>$I = 5{,}25\,\text{A}$ (máximo)</p>
+                            <p>$I_{ef} = 3{,}71\,\text{A}$</p>
+                            <p>$V_R = 131{,}3\,\text{V}$</p>
+                            <p>$V_L = 16{,}5\,\text{V}$</p>
+                            <p>$V_C = 167{,}5\,\text{V}$</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="result-box">
+                            <h3>Potencia y Factor de Potencia</h3>
+                            <p>$P_m = 344\,\text{W}$</p>
+                            <p>$FP = 0{,}66$ (capacitivo)</p>
+                        </div>
+                        <div class="theory-box">
+                            <h3>🎯 Características del circuito</h3>
+                            <ul>
+                                <li>El circuito presenta un <strong>comportamiento capacitivo</strong> porque $X_C > X_L$</li>
+                                <li>La corriente <strong>se adelanta</strong> al voltaje en 49°</li>
+                                <li>El voltaje en el capacitor (167,5 V) es mayor que el voltaje en el inductor (16,5 V)</li>
+                                <li>El factor de potencia de 0,66 indica que se podría mejorar la eficiencia del circuito</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="note-box" style="text-align:center; font-size:1.1em; margin-top:1.5%;">
+                    <strong>🎉 ¡Problema resuelto exitosamente!</strong>
+                </div>
+            </div>
+
+            <!-- NAVEGACIÓN -->
+            <div class="navigation">
+                <button class="nav-button" id="prevBtn" onclick="changeSlide(-1)">◀ Anterior</button>
+                <span class="slide-counter" id="slideCounter">Diapositiva 1 de 10</span>
+                <button class="nav-button" id="nextBtn" onclick="changeSlide(1)">Siguiente ▶</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            if (n >= totalSlides) currentSlide = 0;
+            else if (n < 0) currentSlide = totalSlides - 1;
+            else currentSlide = n;
+            
+            slides[currentSlide].classList.add('active');
+            updateCounter();
+            updateButtons();
+            updateProgress();
+            
+            if (window.MathJax) { MathJax.typesetPromise(); }
+        }
+
+        function changeSlide(n) { showSlide(currentSlide + n); }
+
+        function updateCounter() {
+            document.getElementById('slideCounter').textContent = `Diapositiva ${currentSlide + 1} de ${totalSlides}`;
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').textContent = currentSlide === totalSlides - 1 ? '↺ Reiniciar' : 'Siguiente ▶';
+        }
+
+        function updateProgress() {
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); }
+            else if (e.key === 'Home') { e.preventDefault(); showSlide(0); }
+            else if (e.key === 'End') { e.preventDefault(); showSlide(totalSlides - 1); }
+        });
+
+        showSlide(0);
+    </script>
+</body>
+</html>
