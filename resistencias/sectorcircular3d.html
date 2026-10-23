@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Sector circular 3D - Elemento diferencial dR</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(145deg, #eef4fb, #d6e2ee);
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 28px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    padding: 1.8rem;
+    max-width: 1100px;
+    width: 100%;
+  }
+  h2 {
+    color: #1f3b4c;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.4rem;
+  }
+  .sub {
+    color: #3b5e7a;
+    border-left: 4px solid #e76f51;
+    padding-left: 12px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+  .canvas-wrapper {
+    background: #fbfdff;
+    border-radius: 20px;
+    padding: 10px;
+    box-shadow: inset 0 0 0 1px #dbe4ed;
+    display: flex;
+    justify-content: center;
+  }
+  canvas {
+    display: block;
+    width: 33%;
+    min-width: 320px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    border-radius: 16px;
+    cursor: grab;
+    background: #fbfdff;
+  }
+  canvas:active { cursor: grabbing; }
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1rem;
+    margin-top: 1.2rem;
+  }
+  .slider-group {
+    background: #f4f8fe;
+    padding: 0.7rem 1rem;
+    border-radius: 16px;
+  }
+  .slider-group label {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    color: #1f4e6e;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+  }
+  .slider-group span {
+    background: white;
+    padding: 0.15rem 0.6rem;
+    border-radius: 20px;
+    font-family: monospace;
+    font-size: 0.85rem;
+  }
+  input[type="range"] {
+    width: 100%;
+    accent-color: #e76f51;
+    cursor: pointer;
+  }
+  .note {
+    font-size: 0.8rem;
+    color: #526e8a;
+    margin-top: 0.8rem;
+    text-align: center;
+    background: #eaf1fa;
+    padding: 0.5rem;
+    border-radius: 30px;
+  }
+  .formula-badge {
+    background: #f0f6ff;
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    font-family: monospace;
+    font-size: 1.1rem;
+    display: inline-block;
+    color: #1f5e7e;
+    margin-bottom: 0.8rem;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>🔍 Elemento diferencial dR en 3D (sector circular con espesor e)</h2>
+  <div class="sub">Vista en perspectiva. Arrastra con el ratón para rotar. El espesor del sector es \(e\).</div>
+
+  <div class="canvas-wrapper">
+    <canvas id="canvas3d" width="600" height="600"></canvas>
+  </div>
+
+  <div class="formula-badge">R = ∫ ρ · dr / (α · r · e)</div>
+
+  <div class="controls">
+    <div class="slider-group">
+      <label>Ángulo α (rad) <span id="alphaVal">1.20</span></label>
+      <input type="range" id="alpha" min="0.3" max="2.8" step="0.05" value="1.2">
+    </div>
+    <div class="slider-group">
+      <label>Radio interior a <span id="aVal">1.0</span></label>
+      <input type="range" id="a" min="0.3" max="2.5" step="0.1" value="1.0">
+    </div>
+    <div class="slider-group">
+      <label>Radio exterior b <span id="bVal">3.2</span></label>
+      <input type="range" id="b" min="1.5" max="4.5" step="0.1" value="3.2">
+    </div>
+    <div class="slider-group">
+      <label>Espesor e <span id="eVal">0.8</span></label>
+      <input type="range" id="e" min="0.2" max="2.0" step="0.1" value="0.8">
+    </div>
+    <div class="slider-group">
+      <label>Posición de la rebanada r <span id="rVal">2.1</span></label>
+      <input type="range" id="r" min="0.4" max="4.4" step="0.05" value="2.1">
+    </div>
+  </div>
+
+  <div class="note">
+    La rebanada <strong>azul</strong> es el elemento diferencial \(dR\) de espesor \(dr\), altura \(e\), y área transversal \(A(r)=\alpha\,r\,e\).
+    Las flechas rojas indican la corriente \(I\) radial. El espesor del sólido es \(e\).
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById('canvas3d');
+  const ctx = canvas.getContext('2d');
+  const alphaSlider = document.getElementById('alpha');
+  const aSlider = document.getElementById('a');
+  const bSlider = document.getElementById('b');
+  const eSlider = document.getElementById('e');
+  const rSlider = document.getElementById('r');
+
+  const alphaVal = document.getElementById('alphaVal');
+  const aVal = document.getElementById('aVal');
+  const bVal = document.getElementById('bVal');
+  const eVal = document.getElementById('eVal');
+  const rVal = document.getElementById('rVal');
+
+  // Estado de rotación
+  let rotX = -0.5; // inclinación
+  let rotY = 0.6;  // giro
+  let isDragging = false;
+  let lastMouseX = 0, lastMouseY = 0;
+
+  // Escala y centro de proyección
+  const SCALE = 95;
+  const CX = canvas.width / 2;
+  const CY = canvas.height / 2 + 30;
+
+  // Funciones de proyección 3D -> 2D
+  function project(x, y, z) {
+    // Rotación alrededor de Y
+    const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+    let x1 = x * cosY - z * sinY;
+    let z1 = x * sinY + z * cosY;
+    // Rotación alrededor de X
+    const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+    let y1 = y * cosX - z1 * sinX;
+    let z2 = y * sinX + z1 * cosX;
+    // Proyección ortográfica simple con escala
+    const px = CX + x1 * SCALE;
+    const py = CY - y1 * SCALE;
+    return { x: px, y: py, depth: z2 };
+  }
+
+  // Dibujar un polígono 3D con relleno y borde
+  function drawPolygon(points3d, fillColor, strokeColor, lineWidth = 1.5, opacity = 1) {
+    const projected = points3d.map(p => project(p.x, p.y, p.z));
+    ctx.beginPath();
+    ctx.moveTo(projected[0].x, projected[0].y);
+    for (let i = 1; i < projected.length; i++) {
+      ctx.lineTo(projected[i].x, projected[i].y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = fillColor;
+    ctx.globalAlpha = opacity;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    if (strokeColor) {
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = lineWidth;
+      ctx.stroke();
+    }
+  }
+
+  function drawLine3D(p1, p2, color, width = 1.5, dash = []) {
+    const a = project(p1.x, p1.y, p1.z);
+    const b = project(p2.x, p2.y, p2.z);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.setLineDash(dash);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Dibujar flecha 3D (para corriente)
+  function drawArrow3D(from, to, color, width = 2) {
+    drawLine3D(from, to, color, width);
+    // Punta de flecha
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const dz = to.z - from.z;
+    const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    if (len < 0.01) return;
+    const ux = dx/len, uy = dy/len, uz = dz/len;
+    // Vector perpendicular aproximado (en el plano XY)
+    const px = -uy, py = ux;
+    const size = 0.18;
+    const tip1 = { x: to.x - ux*size + px*size*0.5, y: to.y - uy*size + py*size*0.5, z: to.z - uz*size };
+    const tip2 = { x: to.x - ux*size - px*size*0.5, y: to.y - uy*size - py*size*0.5, z: to.z - uz*size };
+    drawLine3D(to, tip1, color, width);
+    drawLine3D(to, tip2, color, width);
+  }
+
+  // Dibujar texto 3D (proyectado)
+  function drawText3D(pos, text, color, size = 14, align = 'center') {
+    const p = project(pos.x, pos.y, pos.z);
+    ctx.font = `bold ${size}px 'Segoe UI', sans-serif`;
+    ctx.fillStyle = color;
+    ctx.textAlign = align;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, p.x, p.y);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Leer parámetros
+    let alpha = parseFloat(alphaSlider.value);
+    let a = parseFloat(aSlider.value);
+    let b = parseFloat(bSlider.value);
+    let e = parseFloat(eSlider.value);
+    let rPos = parseFloat(rSlider.value);
+
+    // Coherencia
+    if (b <= a + 0.2) { b = a + 0.2; bSlider.value = b; }
+    if (rPos < a) { rPos = a; rSlider.value = rPos; }
+    if (rPos > b) { rPos = b; rSlider.value = rPos; }
+
+    alphaVal.textContent = alpha.toFixed(2);
+    aVal.textContent = a.toFixed(1);
+    bVal.textContent = b.toFixed(1);
+    eVal.textContent = e.toFixed(1);
+    rVal.textContent = rPos.toFixed(2);
+
+    const half = alpha / 2;
+    const angSup = half;
+    const angInf = -half;
+
+    // Función para obtener punto 3D en coordenadas (r, ángulo, z)
+    function pt(r, ang, z) {
+      return { x: r * Math.cos(ang), y: z, z: r * Math.sin(ang) };
+    }
+
+    // Vértices del sector exterior (cara superior e inferior)
+    const N = 32; // segmentos para el arco
+    const outerTop = [];
+    const outerBottom = [];
+    const innerTop = [];
+    const innerBottom = [];
+
+    for (let i = 0; i <= N; i++) {
+      const ang = angInf + (angSup - angInf) * (i / N);
+      outerTop.push(pt(b, ang, e/2));
+      outerBottom.push(pt(b, ang, -e/2));
+      innerTop.push(pt(a, ang, e/2));
+      innerBottom.push(pt(a, ang, -e/2));
+    }
+
+    // --- Dibujar cara superior (sector circular completo) ---
+    const topFace = [];
+    // Arco exterior
+    for (let i = 0; i <= N; i++) topFace.push(outerTop[i]);
+    // Arco interior en sentido inverso
+    for (let i = N; i >= 0; i--) topFace.push(innerTop[i]);
+    drawPolygon(topFace, '#cbdbe6', '#4a6a85', 1.5, 0.9);
+
+    // --- Dibujar cara inferior (solo visible parcialmente) ---
+    const bottomFace = [];
+    for (let i = 0; i <= N; i++) bottomFace.push(outerBottom[i]);
+    for (let i = N; i >= 0; i--) bottomFace.push(innerBottom[i]);
+    drawPolygon(bottomFace, '#b0c4d8', '#4a6a85', 1.5, 0.7);
+
+    // --- Dibujar caras laterales (radios) ---
+    // Lado superior (ángulo +half)
+    const sideTopRight = [
+      pt(a, angSup, e/2), pt(b, angSup, e/2),
+      pt(b, angSup, -e/2), pt(a, angSup, -e/2)
+    ];
+    drawPolygon(sideTopRight, '#a8c0d8', '#4a6a85', 1.5, 0.8);
+
+    // Lado inferior (ángulo -half)
+    const sideBottomRight = [
+      pt(a, angInf, e/2), pt(b, angInf, e/2),
+      pt(b, angInf, -e/2), pt(a, angInf, -e/2)
+    ];
+    drawPolygon(sideBottomRight, '#a8c0d8', '#4a6a85', 1.5, 0.8);
+
+    // --- Rebanada diferencial dR (resaltada en azul) ---
+    const dr = 0.12;
+    const r1 = rPos;
+    const r2 = Math.min(b, rPos + dr);
+    const sliceTop = [];
+    const sliceBottom = [];
+    for (let i = 0; i <= N; i++) {
+      const ang = angInf + (angSup - angInf) * (i / N);
+      sliceTop.push(pt(r1, ang, e/2));
+      sliceBottom.push(pt(r1, ang, -e/2));
+    }
+    // Construir el prisma de la rebanada
+    // Cara superior de la rebanada
+    const sliceTopFace = [];
+    for (let i = 0; i <= N; i++) {
+      const ang = angInf + (angSup - angInf) * (i / N);
+      sliceTopFace.push(pt(r1, ang, e/2));
+    }
+    for (let i = N; i >= 0; i--) {
+      const ang = angInf + (angSup - angInf) * (i / N);
+      sliceTopFace.push(pt(r2, ang, e/2));
+    }
+    drawPolygon(sliceTopFace, '#8ecae6', '#1f6e9e', 2, 0.95);
+
+    // Cara inferior de la rebanada
+    const sliceBottomFace = [];
+    for (let i = 0; i <= N; i++) {
+      const ang = angInf + (angSup - angInf) * (i / N);
+      sliceBottomFace.push(pt(r1, ang, -e/2));
+    }
+    for (let i = N; i >= 0; i--) {
+      const ang = angInf + (angSup - angInf) * (i / N);
+      sliceBottomFace.push(pt(r2, ang, -e/2));
+    }
+    drawPolygon(sliceBottomFace, '#6fa8c9', '#1f6e9e', 2, 0.8);
+
+    // Caras laterales de la rebanada (en los ángulos límite)
+    const sliceSideSup = [
+      pt(r1, angSup, e/2), pt(r2, angSup, e/2),
+      pt(r2, angSup, -e/2), pt(r1, angSup, -e/2)
+    ];
+    drawPolygon(sliceSideSup, '#5a9ac0', '#1f6e9e', 1.5, 0.9);
+
+    const sliceSideInf = [
+      pt(r1, angInf, e/2), pt(r2, angInf, e/2),
+      pt(r2, angInf, -e/2), pt(r1, angInf, -e/2)
+    ];
+    drawPolygon(sliceSideInf, '#5a9ac0', '#1f6e9e', 1.5, 0.9);
+
+    // Caras frontal y trasera de la rebanada (arcos)
+    // Frontal (r = r1)
+    const frontArc = [];
+    for (let i = 0; i <= N; i++) {
+      const ang = angInf + (angSup - angInf) * (i / N);
+      frontArc.push(pt(r1, ang, e/2));
+    }
+    for (let i = N; i >= 0; i--) {
+      const ang = angInf + (angSup - angInf) * (i / N);
+      frontArc.push(pt(r1, ang, -e/2));
+    }
+    drawPolygon(frontArc, '#8ecae6', '#1f6e9e', 1.5, 0.85);
+
+    // Trasera (r = r2)
+    const backArc = [];
+    for (let i = 0; i <= N; i++) {
+      const ang = angInf + (angSup - angInf) * (i / N);
+      backArc.push(pt(r2, ang, e/2));
+    }
+    for (let i = N; i >= 0; i--) {
+      const ang = angInf + (angSup - angInf) * (i / N);
+      backArc.push(pt(r2, ang, -e/2));
+    }
+    drawPolygon(backArc, '#6fa8c9', '#1f6e9e', 1.5, 0.85);
+
+    // --- Ejes ---
+    drawLine3D({x:0,y:0,z:0}, {x:4.5,y:0,z:0}, '#a0b4c8', 1.5, [6,4]);
+    drawLine3D({x:0,y:0,z:0}, {x:0,y:3.5,z:0}, '#a0b4c8', 1.5, [6,4]);
+    drawLine3D({x:0,y:0,z:0}, {x:0,y:0,z:3.5}, '#a0b4c8', 1.5, [6,4]);
+    drawText3D({x:4.6,y:0,z:0}, 'x', '#4a6a85', 14);
+    drawText3D({x:0,y:3.6,z:0}, 'y', '#4a6a85', 14);
+    drawText3D({x:0,y:0,z:3.6}, 'z', '#4a6a85', 14);
+
+    // --- Etiquetas de radios a y b ---
+    drawText3D(pt(a * 0.5, half * 0.7, e/2), 'a', '#1f4e6e', 14);
+    drawText3D(pt(b * 0.6, half * 0.7, e/2), 'b', '#1f4e6e', 14);
+
+    // --- Etiqueta r (sobre la rebanada) ---
+    drawText3D(pt(r1 * 0.75, -0.15, e/2 + 0.1), 'r', '#c44536', 14);
+
+    // --- Etiqueta dr ---
+    drawText3D(pt((r1+r2)/2, 0.12, e/2 + 0.25), 'dr', '#1f6e9e', 12);
+
+    // --- Ángulo α (arco) ---
+    const arcPoints = [];
+    const rArc = 1.0;
+    for (let i = 0; i <= 20; i++) {
+      const ang = angInf + (angSup - angInf) * (i / 20);
+      arcPoints.push(pt(rArc, ang, e/2 + 0.05));
+    }
+    for (let i = 0; i < arcPoints.length - 1; i++) {
+      drawLine3D(arcPoints[i], arcPoints[i+1], '#e76f51', 2);
+    }
+    drawText3D(pt(rArc + 0.2, 0, e/2 + 0.05), 'α', '#c44536', 14);
+
+    // --- Espesor e (flecha doble vertical) ---
+    const ePos = pt(a * 0.5, angInf * 0.6, 0);
+    drawLine3D({x:ePos.x, y:-e/2, z:ePos.z}, {x:ePos.x, y:e/2, z:ePos.z}, '#8b5a2b', 1.5);
+    drawText3D({x:ePos.x - 0.15, y:0, z:ePos.z}, 'e', '#8b5a2b', 12);
+
+    // --- Flechas de corriente I (radiales) ---
+    const arrowPositions = [0.3, 0.6, 0.9];
+    arrowPositions.forEach(frac => {
+      const rArr = a + frac * (b - a);
+      const from = pt(rArr, 0, e/2 + 0.05);
+      const to = pt(rArr + 0.4, 0, e/2 + 0.05);
+      drawArrow3D(from, to, '#c44536', 2.5);
+    });
+    drawText3D(pt(a + 0.4*(b-a), 0.08, e/2 + 0.3), 'I', '#c44536', 16);
+
+    // --- Etiqueta del elemento dR ---
+    drawText3D(pt((r1+r2)/2, half*0.5, e/2 + 0.4), 'dR', '#1f6e9e', 13);
+  }
+
+  // --- Eventos de ratón para rotar ---
+  canvas.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - lastMouseX;
+    const dy = e.clientY - lastMouseY;
+    rotY += dx * 0.01;
+    rotX += dy * 0.01;
+    // Limitar inclinación para no perder la perspectiva
+    rotX = Math.max(-1.2, Math.min(1.2, rotX));
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+    draw();
+  });
+
+  window.addEventListener('mouseup', () => { isDragging = false; });
+
+  // --- Eventos de sliders ---
+  [alphaSlider, aSlider, bSlider, eSlider, rSlider].forEach(s => {
+    s.addEventListener('input', draw);
+  });
+
+  // Iniciar
+  draw();
+</script>
+</body>
+</html>
