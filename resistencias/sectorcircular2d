@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Elemento diferencial dR en un sector circular</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(145deg, #eef4fb, #d6e2ee);
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 28px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    padding: 1.8rem;
+    max-width: 1100px;
+    width: 100%;
+  }
+  h2 {
+    color: #1f3b4c;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.4rem;
+  }
+  .sub {
+    color: #3b5e7a;
+    border-left: 4px solid #e76f51;
+    padding-left: 12px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+  .canvas-wrapper {
+    background: #fbfdff;
+    border-radius: 20px;
+    padding: 10px;
+    box-shadow: inset 0 0 0 1px #dbe4ed;
+  }
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1rem;
+    margin-top: 1.2rem;
+  }
+  .slider-group {
+    background: #f4f8fe;
+    padding: 0.7rem 1rem;
+    border-radius: 16px;
+  }
+  .slider-group label {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    color: #1f4e6e;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+  }
+  .slider-group span {
+    background: white;
+    padding: 0.15rem 0.6rem;
+    border-radius: 20px;
+    font-family: monospace;
+    font-size: 0.85rem;
+  }
+  input[type="range"] {
+    width: 100%;
+    accent-color: #e76f51;
+    cursor: pointer;
+  }
+  .note {
+    font-size: 0.8rem;
+    color: #526e8a;
+    margin-top: 0.8rem;
+    text-align: center;
+    background: #eaf1fa;
+    padding: 0.5rem;
+    border-radius: 30px;
+  }
+  .formula-badge {
+    background: #f0f6ff;
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    font-family: monospace;
+    font-size: 1.1rem;
+    display: inline-block;
+    color: #1f5e7e;
+    margin-bottom: 0.8rem;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>🔍 Elemento diferencial dR en el sector circular</h2>
+  <div class="sub">La corriente fluye radialmente. Se integra una rebanada de arco \(dr\) desde \(a\) hasta \(b\).</div>
+
+  <div class="canvas-wrapper">
+    <svg id="svg" viewBox="0 0 700 420" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
+  <div class="formula-badge">R = ∫ ρ · dr / (α · r · e)</div>
+
+  <div class="controls">
+    <div class="slider-group">
+      <label>Ángulo α (rad) <span id="alphaVal">1.20</span></label>
+      <input type="range" id="alpha" min="0.3" max="2.8" step="0.05" value="1.2">
+    </div>
+    <div class="slider-group">
+      <label>Radio interior a <span id="aVal">1.0</span></label>
+      <input type="range" id="a" min="0.3" max="2.5" step="0.1" value="1.0">
+    </div>
+    <div class="slider-group">
+      <label>Radio exterior b <span id="bVal">3.2</span></label>
+      <input type="range" id="b" min="1.5" max="4.5" step="0.1" value="3.2">
+    </div>
+    <div class="slider-group">
+      <label>Posición de la rebanada r <span id="rVal">2.1</span></label>
+      <input type="range" id="r" min="0.4" max="4.4" step="0.05" value="2.1">
+    </div>
+  </div>
+
+  <div class="note">
+    La rebanada <strong>azul punteada</strong> representa el elemento diferencial de espesor \(dr\), 
+    área transversal \(A(r)=\alpha\,r\,e\) y resistencia \(dR = \rho\,dr/(\alpha\,r\,e)\).
+    El punto rojo marca la posición de la sección actual.
+  </div>
+</div>
+
+<script>
+  const svg = document.getElementById('svg');
+  const alphaSlider = document.getElementById('alpha');
+  const aSlider = document.getElementById('a');
+  const bSlider = document.getElementById('b');
+  const rSlider = document.getElementById('r');
+
+  const alphaVal = document.getElementById('alphaVal');
+  const aVal = document.getElementById('aVal');
+  const bVal = document.getElementById('bVal');
+  const rVal = document.getElementById('rVal');
+
+  // Parámetros de dibujo
+  const CX = 60;          // origen en x (vértice)
+  const CY = 210;         // origen en y (centro vertical)
+  const SCALE = 70;       // píxeles por unidad de longitud
+
+  function polar(r, ang) {
+    return { x: CX + r * SCALE * Math.cos(ang), y: CY - r * SCALE * Math.sin(ang) };
+  }
+
+  function draw() {
+    let alpha = parseFloat(alphaSlider.value);
+    let a = parseFloat(aSlider.value);
+    let b = parseFloat(bSlider.value);
+    let rPos = parseFloat(rSlider.value);
+
+    // Asegurar coherencia
+    if (b <= a + 0.2) { b = a + 0.2; bSlider.value = b; }
+    if (rPos < a) { rPos = a; rSlider.value = rPos; }
+    if (rPos > b) { rPos = b; rSlider.value = rPos; }
+
+    alphaVal.textContent = alpha.toFixed(2);
+    aVal.textContent = a.toFixed(1);
+    bVal.textContent = b.toFixed(1);
+    rVal.textContent = rPos.toFixed(2);
+
+    const half = alpha / 2;
+    const angSup = half;
+    const angInf = -half;
+
+    // Puntos clave
+    const pA_sup = polar(a, angSup);
+    const pA_inf = polar(a, angInf);
+    const pB_sup = polar(b, angSup);
+    const pB_inf = polar(b, angInf);
+
+    // Puntos de la rebanada
+    const dr = 0.10; // espesor visual fijo para la rebanada
+    const r1 = rPos;
+    const r2 = Math.min(b, rPos + dr);
+    const pR1_sup = polar(r1, angSup);
+    const pR1_inf = polar(r1, angInf);
+    const pR2_sup = polar(r2, angSup);
+    const pR2_inf = polar(r2, angInf);
+
+    // Ángulo para el arco (en grados)
+    const angSupDeg = -half * 180 / Math.PI;
+    const angInfDeg = half * 180 / Math.PI;
+
+    // Construir el SVG
+    let html = '';
+
+    // --- Sólido completo (sector circular) ---
+    const arcOuter = `M ${pB_sup.x} ${pB_sup.y} A ${b*SCALE} ${b*SCALE} 0 0 1 ${pB_inf.x} ${pB_inf.y}`;
+    const lineToInner = `L ${pA_inf.x} ${pA_inf.y}`;
+    const arcInner = `A ${a*SCALE} ${a*SCALE} 0 0 0 ${pA_sup.x} ${pA_sup.y} Z`;
+    html += `<path d="${arcOuter} ${lineToInner} ${arcInner}" fill="#cbdbe6" stroke="#4a6a85" stroke-width="2" opacity="0.85"/>`;
+
+    // --- Ejes ---
+    html += `<line x1="${CX}" y1="${CY}" x2="${CX + 4.8*SCALE}" y2="${CY}" stroke="#a0b4c8" stroke-width="1.5" stroke-dasharray="6 4"/>`;
+    html += `<line x1="${CX}" y1="${CY}" x2="${CX}" y2="${CY - 3.6*SCALE}" stroke="#a0b4c8" stroke-width="1.5" stroke-dasharray="6 4"/>`;
+    html += `<text x="${CX + 4.6*SCALE}" y="${CY - 8}" fill="#4a6a85" font-size="14">x</text>`;
+    html += `<text x="${CX - 18}" y="${CY - 3.2*SCALE}" fill="#4a6a85" font-size="14">y</text>`;
+
+    // --- Radios límite ---
+    html += `<line x1="${CX}" y1="${CY}" x2="${pA_sup.x}" y2="${pA_sup.y}" stroke="#4a6a85" stroke-width="1.5"/>`;
+    html += `<line x1="${CX}" y1="${CY}" x2="${pA_inf.x}" y2="${pA_inf.y}" stroke="#4a6a85" stroke-width="1.5"/>`;
+    html += `<line x1="${CX}" y1="${CY}" x2="${pB_sup.x}" y2="${pB_sup.y}" stroke="#4a6a85" stroke-width="1.5"/>`;
+    html += `<line x1="${CX}" y1="${CY}" x2="${pB_inf.x}" y2="${pB_inf.y}" stroke="#4a6a85" stroke-width="1.5"/>`;
+
+    // --- Etiquetas de radios ---
+    const labelA = polar(a * 0.5, half * 0.7);
+    const labelB = polar(b * 0.6, half * 0.7);
+    html += `<text x="${labelA.x}" y="${labelA.y}" fill="#1f4e6e" font-size="13" font-weight="bold">a</text>`;
+    html += `<text x="${labelB.x}" y="${labelB.y}" fill="#1f4e6e" font-size="13" font-weight="bold">b</text>`;
+
+    // --- Ángulo α ---
+    const arcAng = `M ${polar(1.0, angSup).x} ${polar(1.0, angSup).y} A ${1.0*SCALE} ${1.0*SCALE} 0 0 1 ${polar(1.0, angInf).x} ${polar(1.0, angInf).y}`;
+    html += `<path d="${arcAng}" fill="none" stroke="#e76f51" stroke-width="2"/>`;
+    const alphaLabel = polar(1.0, 0);
+    html += `<text x="${alphaLabel.x + 10}" y="${alphaLabel.y + 5}" fill="#c44536" font-size="14" font-weight="bold">α</text>`;
+
+    // --- Rebanada diferencial dR (resaltada) ---
+    const slicePath = `M ${pR1_sup.x} ${pR1_sup.y} 
+                       L ${pR2_sup.x} ${pR2_sup.y} 
+                       A ${r2*SCALE} ${r2*SCALE} 0 0 1 ${pR2_inf.x} ${pR2_inf.y} 
+                       L ${pR1_inf.x} ${pR1_inf.y} 
+                       A ${r1*SCALE} ${r1*SCALE} 0 0 0 ${pR1_sup.x} ${pR1_sup.y} Z`;
+    html += `<path d="${slicePath}" fill="#8ecae6" stroke="#1f6e9e" stroke-width="2" opacity="0.9"/>`;
+
+    // Puntos de la rebanada
+    html += `<circle cx="${pR1_sup.x}" cy="${pR1_sup.y}" r="4" fill="#1f6e9e"/>`;
+    html += `<circle cx="${pR1_inf.x}" cy="${pR1_inf.y}" r="4" fill="#1f6e9e"/>`;
+    html += `<circle cx="${pR2_sup.x}" cy="${pR2_sup.y}" r="4" fill="#1f6e9e"/>`;
+    html += `<circle cx="${pR2_inf.x}" cy="${pR2_inf.y}" r="4" fill="#1f6e9e"/>`;
+
+    // Radio punteado hasta la rebanada
+    html += `<line x1="${CX}" y1="${CY}" x2="${pR1_sup.x}" y2="${pR1_sup.y}" stroke="#e63946" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+    html += `<line x1="${CX}" y1="${CY}" x2="${pR1_inf.x}" y2="${pR1_inf.y}" stroke="#e63946" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+
+    // Etiqueta r
+    const rLabel = polar(r1 * 0.7, -0.15);
+    html += `<text x="${rLabel.x}" y="${rLabel.y}" fill="#c44536" font-size="13" font-weight="bold">r</text>`;
+
+    // Etiqueta dr
+    const midR = (r1 + r2) / 2;
+    const drLabelPos = polar(midR, 0.12);
+    html += `<text x="${drLabelPos.x + 12}" y="${drLabelPos.y - 10}" fill="#1f6e9e" font-size="12" font-weight="bold">dr</text>`;
+    // Flecha dr
+    html += `<line x1="${pR1_sup.x + 6}" y1="${pR1_sup.y - 6}" x2="${pR2_sup.x + 6}" y2="${pR2_sup.y - 6}" stroke="#1f6e9e" stroke-width="1.5" marker-end="url(#arrowBlue)"/>`;
+
+    // --- Flechas de corriente I ---
+    const arrowPositions = [0.25, 0.5, 0.75];
+    arrowPositions.forEach(frac => {
+      const rArrow = a + frac * (b - a);
+      const p1 = polar(rArrow, 0);
+      const p2 = polar(rArrow + 0.35, 0);
+      html += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="#c44536" stroke-width="2.5" marker-end="url(#arrowRed)"/>`;
+    });
+    html += `<text x="${polar(a + 0.4*(b-a), 0.08).x}" y="${polar(a + 0.4*(b-a), 0.08).y - 12}" fill="#c44536" font-size="16" font-weight="bold">I</text>`;
+
+    // --- Definición de marcadores ---
+    html += `<defs>
+      <marker id="arrowRed" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#c44536"/>
+      </marker>
+      <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" fill="#1f6e9e"/>
+      </marker>
+    </defs>`;
+
+    svg.innerHTML = html;
+  }
+
+  [alphaSlider, aSlider, bSlider, rSlider].forEach(s => {
+    s.addEventListener('input', draw);
+  });
+
+  draw();
+</script>
+</body>
+</html>
